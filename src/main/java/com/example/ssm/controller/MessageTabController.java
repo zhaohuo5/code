@@ -30,7 +30,7 @@ public class MessageTabController {
     private IUserTabService userTabService;
 
     @GetMapping("/select")
-    public Result getAdminMsgByPage(MyQueryWraaper map, HttpSession session){
+    public Result getPage(MyQueryWraaper map, HttpSession session){
 
         long start = System.currentTimeMillis();
 //        设置默认值
