@@ -33,8 +33,9 @@ public class UserTabController {
     public Result register(@RequestBody UserTab userTab){
         String regrex="^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$";
         if (!userTab.getUserEmail().matches(regrex) || userTab.getUserRole()<=0) {
-            return  Result.fail("信息错误，请重试");
+            return  Result.fail("邮箱验证错误，请重试");
         }
+        //设置默认值
         userTab.setUserName("user"+ UUID.randomUUID());
         userTab.setGender("男");
         userTab.setSignature("");

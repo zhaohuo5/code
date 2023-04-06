@@ -47,11 +47,13 @@ public class MessageTabController {
             map.setPage(-1);
 
         }
-        UserTab user =(UserTab) session.getAttribute("user");
+//        根据session获取用户ID
+//        UserTab user =(UserTab) session.getAttribute("user");
 //        if(user.getId()<=0){
 //         return  Result.fail("请登录");
 //        }
 //        Integer userId = ( user.getId());
+        //跳过登录直接查询
         Integer userId = 1;
 
         Integer role = userTabService.getById(userId).getUserRole();
@@ -59,6 +61,7 @@ public class MessageTabController {
         map.setRole(role);
         Result result;
         if(role==66){
+            //根据用户权限判断查询
              result = messageTabService.adminGetMsgByAuth(map);
         }else{
               result=messageTabService.userGetMsgByAuth(map);
