@@ -342,21 +342,21 @@ public class MessageTabServiceImpl extends ServiceImpl<MessageTabMapper, Message
         }
 
 
-        //2 get tag id 的数据 去除重复够，进行数据的映射
-        LambdaQueryWrapper<TagMsgTab> tagQuery = new LambdaQueryWrapper<>();
-        List<Integer> msgIds = message_tabs.stream().map(s -> s.getId()).collect(Collectors.toList());
-        tagQuery.select(TagMsgTab::getMsgId,TagMsgTab::getTagId).in(TagMsgTab::getMsgId,msgIds);
-
+        //2 get tag id 并去除重复，进行数据的映射
 
         //先去缓存中取tagMap ,
         Map<Object, Object> tagMap = stringRedisTemplate.opsForHash().entries(UserConstant.TAGMAP);
-        HashMap<String, String> tagResultMap = new HashMap<>();
+        Map<String, String> tagResultMap = new HashMap<>();
         // cashe miss
         if(tagMap.isEmpty()){
             List<TagTab> tagTabs = tagTabDao.selectBatchIds(tagIds);
            tagMap = tagTabs.stream().collect(Collectors.toMap(s -> s.getId()+"", s -> s.getTagName()));
+           //
+           tagResultMap = tagTabs.stream().collect(Collectors.toMap(s -> s.getId()+"", s -> s.getTagName()));
+           //加入缓存
+           stringRedisTemplate.opsForHash().putAll(UserConstant.TAGMAP,tagMap);
         }else{
-            //3
+            //cache 命中
             Iterator<Integer> iterator = tagIdsBack.iterator();
             while (iterator.hasNext()){
                 String next = iterator.next()+"";
@@ -390,16 +390,20 @@ public class MessageTabServiceImpl extends ServiceImpl<MessageTabMapper, Message
 
 
 
-        List<TagTab> tagTabs = tagTabDao.selectBatchIds(tagIds);
+//        List<TagTab> tagTabs = tagTabDao.selectBatchIds(tagIds);
         //映射
+        LambdaQueryWrapper<TagMsgTab> tagQuery = new LambdaQueryWrapper<>();
+        List<Integer> msgIds = message_tabs.stream().map(s -> s.getId()).collect(Collectors.toList());
+        tagQuery.select(TagMsgTab::getMsgId,TagMsgTab::getTagId).in(TagMsgTab::getMsgId,msgIds);
 
-        // 获取到 tag ids  and msg id  优化2
+
+
         List<TagMsgTab> tagMsgTabs = tagMsgTabDao.selectList(tagQuery);
-
+    // 进行 tagID 和name的绑定
         for (int i = 0; i < tagMsgTabs.size(); i++) {
             Integer msgId = tagMsgTabs.get(i).getMsgId();
             Integer tagId = tagMsgTabs.get(i).getTagId();
-            String tag =(String) tagMap.get(tagMsgTabs.get(i).getTagId());
+            String tag =tagResultMap.get(tagMsgTabs.get(i).getTagId()+"");
             if(tagIdsGroupByMsgId.containsKey(msgId)){
                 tagIdsGroupByMsgId.get(msgId).put(tagId,tag);
             }else{ // first ,need to new list
