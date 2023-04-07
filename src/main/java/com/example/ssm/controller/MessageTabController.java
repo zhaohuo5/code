@@ -1,6 +1,8 @@
 package com.example.ssm.controller;
 
 
+import com.alibaba.druid.util.StringUtils;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.ssm.entity.MessageTab;
 import com.example.ssm.entity.UserTab;
 import com.example.ssm.entity.wrapper.MyQueryWraaper;
@@ -8,10 +10,13 @@ import com.example.ssm.entity.wrapper.RecievedMessage;
 import com.example.ssm.service.IMessageTabService;
 import com.example.ssm.service.IUserTabService;
 import com.example.ssm.util.Result;
+import com.example.ssm.util.UserConstant;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -28,6 +33,8 @@ public class MessageTabController {
     private IMessageTabService messageTabService;
     @Autowired
     private IUserTabService userTabService;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @GetMapping("/select")
     public Result getPage(MyQueryWraaper map, HttpSession session){
@@ -55,19 +62,24 @@ public class MessageTabController {
 //        Integer userId = ( user.getId());
         //跳过登录直接查询
         Integer userId = 1;
-
-        Integer role = userTabService.getById(userId).getUserRole();
-
-        map.setRole(role);
+        LambdaQueryWrapper<UserTab> userTabLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        userTabLambdaQueryWrapper.select(UserTab::getUserRole).eq(UserTab::getId,userId);
+        //增加缓存
+        String role = stringRedisTemplate.opsForValue().get(UserConstant.USERROLE + userId);
+        if(StringUtils.isEmpty(role)){
+             role = userTabService.getOne(userTabLambdaQueryWrapper).getUserRole()+"";
+            stringRedisTemplate.opsForValue().set(UserConstant.USERROLE +userId,userId+"",30, TimeUnit.MINUTES);
+        }
+       map.setRole(Integer.valueOf(role));
         Result result;
-        if(role==66){
+        if(Integer.valueOf(role)==66){
             //根据用户权限判断查询
              result = messageTabService.adminGetMsgByAuth(map);
         }else{
               result=messageTabService.userGetMsgByAuth(map);
         }
 
-        long end = System.currentTimeMillis();
+//        long end = System.currentTimeMillis();
 //        if((end-start)>1000){
 //            System.out.println(Thread.currentThread().getName());
 //        }

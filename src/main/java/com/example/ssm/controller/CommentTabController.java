@@ -28,7 +28,7 @@ public class CommentTabController {
     private ICommentTabService commentTabService;
     @PostMapping
     Result InsertComment(@RequestBody CommentTab commentTab){
-        if(commentTab.getUserId()<=0 ||commentTab.getMsgId()<=0){
+        if(commentTab.getUserId()==null||commentTab.getMsgId()==null){
             return  Result.fail("错误的ID，请重试");
         }
         LocalDateTime now = LocalDateTime.now();

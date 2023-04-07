@@ -27,5 +27,6 @@ public interface MessageTabMapper extends BaseMapper<MessageTab> {
 
 
     List<Integer> getSingleMsgIdByTypeId  (@Param("typeids") Set<Integer> typeIds);
+    List<MessageTab> getPageByTypeId  (@Param("typeids") Set<Integer> typeIds,@Param("page")int page,@Param("offset") int offeset);
 
 }

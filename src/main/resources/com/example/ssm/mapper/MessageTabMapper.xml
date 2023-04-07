@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.ssm.mapper.MessageTabMapper">
+
+    <select id="selectBypage" resultType="Integer">
+        select id from message_tab where msg_status=1 order by mtime limit #{page},200;
+
+    </select>
+    <select id="getMsgByTypeId" resultType="integer">
+        select id from   message_tab   where type_id in
+        <foreach collection="typeIds" item="tid" open="(" close=")" separator=",">
+            #{tid}
+        </foreach>
+         limit  #{page},200;
+
+    </select>
+    <select id="getSingleMsgIdByTypeId" resultType="java.lang.Integer">
+
+        select id from message_tab where type_id  in <foreach collection="typeids" item="ids" open="(" close=")" separator=",">
+        #{ids}
+    </foreach>
+        limit 5000,200
+    </select>
+    <select id="getPageByTypeId" resultType="com.example.ssm.entity.MessageTab">
+        select b.id, type_id, msg, ctime, mtime from (select  id from message_tab where  msg_status=1 and type_id in
+        <foreach collection="typeids" item="ids" open="(" close=")" separator=",">
+        #{ids}
+    </foreach> order by mtime  limit  #{page},#{offset}) a, message_tab b where a.id=b.id
+
+    </select>
+
+
+</mapper>
+

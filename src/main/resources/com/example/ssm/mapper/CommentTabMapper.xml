@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.ssm.mapper.CommentTabMapper">
+
+
+    <select id="getComment" resultType="com.example.ssm.entity.CommentTab">
+        select  a.id,user_id,c_content,comment_time from comment_tab a ,(select  id from comment_tab where msg_id=1  order by comment_time desc
+        limit #{page},200) b
+        where msg_id=#{msgId} and a.id=b.id ;
+    </select>
+</mapper>
