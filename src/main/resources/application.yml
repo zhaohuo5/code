@@ -1,0 +1,45 @@
+mybatis-plus:
+  global-config:
+    db-config:
+      id-type: auto
+server:
+  port: 80
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    druid:
+      connection-properties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=500
+      filters: stat,wall
+      initial-size: 100
+      max-active: 1000
+      max-wait: 6000
+      min-idle: 100
+      remove-abandoned: true
+      stat-view-servlet:
+        enabled: true
+        login-password: admin
+        login-username: admin
+        reset-enable: true
+        url-pattern: /druid/*
+      web-stat-filter:
+        enabled: true
+        exclusions: '*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*'
+        url-pattern: /*
+    password: zxc123...
+    url: jdbc:mysql://localhost:3306/message_management_system_db
+    username: root
+  jackson:
+    default-property-inclusion: non_null
+  redis:
+    host: 127.0.0.1
+    jedis:
+      pool:
+        time-between-eviction-runs: 10s
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 1
+    port: 6379
+fileUpload:
+  path: /Users/aliang/Downloads/SSM/src/main/resources/static

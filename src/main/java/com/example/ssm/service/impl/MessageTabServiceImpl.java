@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -33,20 +34,21 @@ import java.util.stream.Collectors;
 @Service
 
 public class MessageTabServiceImpl extends ServiceImpl<MessageTabMapper, MessageTab> implements IMessageTabService {
-    @Autowired
+    @Resource
     private MessageTabMapper messageTabDao;
-    @Autowired
+    @Resource
     private TypeTabMapper typeTabDao;
-    @Autowired
+    @Resource
     private TagMsgTabMapper tagMsgTabDao;
-    @Autowired
+    @Resource
     private TagTabMapper tagTabDao;
-    @Autowired
+    @Resource
     RoleTabMapper roleTabMapper;
-    @Autowired
+    @Resource
     CommentTabMapper commentTabMapper;
-    @Autowired
+    @Resource
     StringRedisTemplate stringRedisTemplate;
+    @Override
     public Result adminGetMsgByAuth(MyQueryWraaper map){
         /*
         *先查role 对应的type 在去查tagmsgtab 对应的msgiD 最后再查msg信息
@@ -62,7 +64,9 @@ public class MessageTabServiceImpl extends ServiceImpl<MessageTabMapper, Message
                 .eq(tagId>0,TagMsgTab::getTagId,tagId)
                 .in(typeId>0,TagMsgTab::getTypeId,typeId).last(limit);
         List<TagMsgTab> tagMsgTabs = tagMsgTabDao.selectList(tagQuery);
-        if(tagMsgTabs.size()==0) return Result.fail("没有符合的消息");
+        if(tagMsgTabs.size()==0) {
+            return Result.fail("没有符合的消息");
+        }
         List<Integer> msgIds = tagMsgTabs.stream().map(s -> s.getMsgId()).collect(Collectors.toList());
 
 
@@ -213,15 +217,13 @@ public class MessageTabServiceImpl extends ServiceImpl<MessageTabMapper, Message
 
         List<MessageTab> messageTabs;
         String limit="limit "+map.getPage()+","+"200";
-        if(map.getTagId()<=0){ // 不需要tag  查询
+        if(map.getTagId()<=0){
             messageTabs = this.messageTabDao.getPageByTypeId(typeIds, map.getPage(), UserConstant.OFFSET);
 //            msgIds=messageTabs.stream().map(s->s.getId()).collect(Collectors.toList());
 
         }else{
-            //需要tag 查询
-            // 根据typeid 获取所有msgId
 
-            tagQuery.select(TagMsgTab::getMsgId).eq(map.getTypeId()>0,TagMsgTab::getTypeId,map.getTypeId()).
+            tagQuery.select(TagMsgTab::getMsgId).
                     eq(TagMsgTab::getTagId,map.getTagId()).in(map.getTypeId()<=0,TagMsgTab::getTypeId,typeIds).last(limit);
 
             List<Integer> msgIds = tagMsgTabDao.selectList(tagQuery).stream().map(s -> s.getMsgId()).collect(Collectors.toList());
@@ -238,7 +240,9 @@ public class MessageTabServiceImpl extends ServiceImpl<MessageTabMapper, Message
 
         //根据msgId  获取对应tag id
         // 再根据 tag id 获取
-        if(messageTabs.size()==0) return Result.fail("查无此消息");
+        if(messageTabs.size()==0) {
+            return Result.fail("查无此消息");
+        }
 
 
 
@@ -260,7 +264,7 @@ public class MessageTabServiceImpl extends ServiceImpl<MessageTabMapper, Message
 
 
 
-    private Result getpageByMsgId(List<MessageTab> message_tabs){
+    private Result getpageByMsgId(List<MessageTab> messageTabs){
 
         HashMap<Integer, HashMap<Integer,String>> tagIdsGroupByMsgId = new HashMap<>();
         QueryWrapper<TagMsgTab> tagMsgTabQueryWrapper = new QueryWrapper<>();
@@ -272,9 +276,9 @@ public class MessageTabServiceImpl extends ServiceImpl<MessageTabMapper, Message
 //                MessageTab::getMtime,
 //                MessageTab::getCtime).in(MessageTab::getId,msgIds);
 //        long start = System.currentTimeMillis();
-//        List<MessageTab> message_tabs = messageTabDao.selectList(mesQuery);
+//        List<MessageTab> messageTabs = messageTabDao.selectList(mesQuery);
 //        System.out.println("msg数据库查询"+(System.currentTimeMillis()-start));
-        Set<Integer> typeIds = message_tabs.stream().map(s -> s.getTypeId()).collect(Collectors.toSet());
+        Set<Integer> typeIds = messageTabs.stream().map(s -> s.getTypeId()).collect(Collectors.toSet());
         Set<Integer> typeIdsBack = new HashSet<>(typeIds);
         int setSize=typeIds.size();
 
@@ -393,7 +397,7 @@ public class MessageTabServiceImpl extends ServiceImpl<MessageTabMapper, Message
 //        List<TagTab> tagTabs = tagTabDao.selectBatchIds(tagIds);
         //映射
         LambdaQueryWrapper<TagMsgTab> tagQuery = new LambdaQueryWrapper<>();
-        List<Integer> msgIds = message_tabs.stream().map(s -> s.getId()).collect(Collectors.toList());
+        List<Integer> msgIds = messageTabs.stream().map(s -> s.getId()).collect(Collectors.toList());
         tagQuery.select(TagMsgTab::getMsgId,TagMsgTab::getTagId).in(TagMsgTab::getMsgId,msgIds);
 
 
@@ -420,7 +424,7 @@ public class MessageTabServiceImpl extends ServiceImpl<MessageTabMapper, Message
 
         }
         List<RecievedMessage> collect =
-                message_tabs.stream().map(s -> new RecievedMessage(s, tagIdsGroupByMsgId.get(s.getId()) , typeMap.get(s.getTypeId()))).collect(Collectors.toList());
+                messageTabs.stream().map(s -> new RecievedMessage(s, tagIdsGroupByMsgId.get(s.getId()) , typeMap.get(s.getTypeId()))).collect(Collectors.toList());
 
 
         //重新封装成一个对象
